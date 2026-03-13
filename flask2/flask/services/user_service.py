@@ -1,5 +1,8 @@
 from models.user import User
 from database import Session_safe
+from models.post import Post
+from models.like import Like
+from models.comment import Comment
 
 class UserService:
 
@@ -58,6 +61,30 @@ class UserService:
         except:
             db.rollback()
             return False, "Пользователь не обновлён"
+        finally:
+            db.close()
+
+    @staticmethod
+    def get_user_with_posts(user_id):
+        db = Session_safe()
+        try:
+            user = db.query(User).filter(User.id == user_id).first()
+            if not user:
+                return None
+            
+            posts = db.query(Post).filter(Post.user_id == user_id).order_by(Post.created_at.desc()).all()
+            
+            for post in posts:
+                post.likes = db.query(Like).filter(Like.post_id == post.id).all()
+                
+                post.comments = db.query(Comment).filter(Comment.post_id == post.id).order_by(Comment.created_at.desc()).all()
+                
+                for comment in post.comments:
+                    comment.author = db.query(User).filter(User.id == comment.user_id).first()
+            
+            user.posts = posts
+            
+            return user
         finally:
             db.close()
 

@@ -27,7 +27,7 @@
             <div class="error-message" id="titleError"></div>
         </div>
 
-        <!-- Содержание поста -->
+        <!-- Содержание поста с TinyMCE -->
         <div class="form-group">
             <label for="content" class="form-label">Содержание поста</label>
             <textarea 
@@ -73,246 +73,100 @@
     </form>
 </div>
 
+<!-- ✅ Подключаем TinyMCE -->
+<script src="https://cdn.jsdelivr.net/npm/tinymce@6/tinymce.min.js"></script>
+<script>
+// Инициализация TinyMCE с тёмной темой
+tinymce.init({
+    selector: '#content',
+    height: 450,
+    menubar: false,
+    branding: false,
+    skin: 'oxide-dark',
+    content_css: 'dark',
+    plugins: 'image link table code preview lists emoticons',
+    toolbar: 'undo redo | styleselect | bold italic underline strikethrough | ' +
+             'alignleft aligncenter alignright alignjustify | ' +
+             'bullist numlist | code preview | removeformat',
+    
+    // Настройки заголовков
+    style_formats: [
+        { title: 'Заголовок 1', format: 'h1' },
+        { title: 'Заголовок 2', format: 'h2' },
+        { title: 'Заголовок 3', format: 'h3' },
+        { title: 'Обычный текст', format: 'p' },
+        { title: 'Цитата', format: 'blockquote' },
+        { title: 'Код', format: 'code' }
+    ],
+    
+    // Обработка изображений внутри редактора
+    image_title: true,
+    automatic_uploads: false,
+    file_picker_types: 'image',
+    
+    file_picker_callback: function(cb, value, meta) {
+        const input = document.createElement('input');
+        input.setAttribute('type', 'file');
+        input.setAttribute('accept', 'image/*');
+        
+        input.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file || !file.type.startsWith('image/')) {
+                alert('Пожалуйста, выберите изображение');
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Изображение слишком большое (макс. 5MB)');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.addEventListener('load', function() {
+                // Создаём blob для TinyMCE
+                const id = 'blobid' + (new Date()).getTime();
+                const blobCache = tinymce.activeEditor.editorUpload.blobCache;
+                const base64 = reader.result.split(',')[1];
+                
+                const blobInfo = blobCache.create(id, file, base64);
+                blobCache.add(blobInfo);
+                
+                // Возвращаем URL в редактор
+                cb(blobInfo.blobUri(), { title: file.name });
+            });
+            reader.readAsDataURL(file);
+        });
+        
+        input.click();
+    },
+    
+    // Счётчик символов при изменении
+    setup: function(editor) {
+        editor.on('change keyup undo redo', function() {
+            updateCharCount();
+        });
+    }
+});
+
+// Счётчик символов (без HTML-тегов)
+function updateCharCount() {
+    const content = tinymce.get('content')?.getContent() || '';
+    const text = content.replace(/<[^>]*>/g, '').trim();
+    document.getElementById('contentCounter').textContent = text.length + ' символов';
+}
+
+// Счётчик заголовка
+document.getElementById('title')?.addEventListener('input', function() {
+    document.getElementById('titleCounter').textContent = this.value.length + '/50';
+});
+
+// Инициализация счётчика при загрузке
+window.addEventListener('DOMContentLoaded', function() {
+    updateCharCount();
+});
+</script>
+
 <style>
-.edit-post-container {
-    max-width: 900px;
-    margin: 40px auto;
-    padding: 0 20px;
-}
 
-.edit-post-header {
-    text-align: center;
-    margin-bottom: 40px;
-}
-
-.edit-post-header h1 {
-    font-size: 38px;
-    color: #FF6F00;
-    margin-bottom: 12px;
-    font-weight: 700;
-    text-shadow: 0 0 10px rgba(255, 111, 0, 0.3);
-}
-
-.subtitle {
-    color: #ccc;
-    font-size: 18px;
-    opacity: 0.8;
-}
-
-.post-form {
-    background: linear-gradient(145deg, #1E1E1E, #161616);
-    padding: 45px;
-    border-radius: 24px;
-    box-shadow: 
-        0 10px 40px rgba(0, 0, 0, 0.6),
-        0 0 20px rgba(255, 111, 0, 0.1);
-    border: 1px solid rgba(255, 111, 0, 0.2);
-    position: relative;
-    overflow: hidden;
-}
-
-.post-form::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255, 111, 0, 0.05) 0%, transparent 70%);
-    z-index: 0;
-}
-
-.form-group {
-    margin-bottom: 30px;
-    position: relative;
-    z-index: 1;
-}
-
-.form-label {
-    display: block;
-    margin-bottom: 12px;
-    font-weight: 600;
-    color: #FFA726;
-    font-size: 17px;
-    letter-spacing: 0.5px;
-}
-
-.form-input,
-.form-textarea {
-    width: 100%;
-    padding: 16px;
-    background: rgba(30, 30, 30, 0.9);
-    border: 1px solid #3a3a3a;
-    border-radius: 14px;
-    color: white;
-    font-size: 16px;
-    transition: all 0.3s ease;
-    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.form-input:focus,
-.form-textarea:focus {
-    outline: none;
-    border-color: #FF6F00;
-    box-shadow: 
-        0 0 0 3px rgba(255, 111, 0, 0.2),
-        inset 0 2px 10px rgba(255, 111, 0, 0.1);
-}
-
-.form-input:hover,
-.form-textarea:hover {
-    border-color: #555;
-}
-
-.form-textarea {
-    min-height: 350px;
-    resize: vertical;
-    line-height: 1.7;
-    font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-}
-
-.char-counter {
-    position: absolute;
-    bottom: 10px;
-    right: 15px;
-    font-size: 13px;
-    color: #888;
-    pointer-events: none;
-    font-weight: 500;
-}
-
-.error-message {
-    color: #e74c3c;
-    font-size: 14px;
-    margin-top: 6px;
-    padding: 8px 12px;
-    background: rgba(231, 76, 60, 0.1);
-    border-radius: 8px;
-    display: none;
-    font-weight: 500;
-}
-
-/* Информация о посте */
-.post-info {
-    background: rgba(255, 111, 0, 0.05);
-    border-left: 3px solid #FF6F00;
-    padding: 15px 20px;
-    border-radius: 10px;
-    margin: 25px 0;
-}
-
-.info-item {
-    display: flex;
-    padding: 8px 0;
-    border-bottom: 1px solid rgba(255, 111, 0, 0.1);
-}
-
-.info-item:last-child {
-    border-bottom: none;
-}
-
-.info-label {
-    color: #FFA726;
-    font-weight: 600;
-    min-width: 180px;
-}
-
-.info-value {
-    color: #ccc;
-    flex: 1;
-}
-
-.form-actions {
-    display: flex;
-    gap: 15px;
-    margin-top: 40px;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-.btn {
-    padding: 16px 36px;
-    border: none;
-    border-radius: 14px;
-    font-size: 17px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    transition: all 0.3s ease;
-    text-decoration: none;
-    position: relative;
-    overflow: hidden;
-    z-index: 1;
-}
-
-.btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transform: translateX(-100%);
-    transition: transform 0.6s;
-    z-index: -1;
-}
-
-.btn:hover::before {
-    transform: translateX(100%);
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #FF6F00, #FF9800);
-    color: white;
-    box-shadow: 0 6px 20px rgba(255, 111, 0, 0.4);
-}
-
-.btn-primary:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(255, 111, 0, 0.6);
-}
-
-.btn-primary:active {
-    transform: translateY(1px);
-}
-
-.btn-secondary {
-    background: rgba(255, 111, 0, 0.1);
-    color: #FF6F00;
-    border: 2px solid #FF6F00;
-    box-shadow: 0 4px 15px rgba(255, 111, 0, 0.15);
-}
-
-.btn-secondary:hover {
-    background: rgba(255, 111, 0, 0.2);
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(255, 111, 0, 0.25);
-}
-
-.btn-danger {
-    background: linear-gradient(135deg, #e74c3c, #c0392b);
-    color: white;
-    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
-}
-
-.btn-danger:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.5);
-    background: linear-gradient(135deg, #c0392b, #a93226);
-}
-
-.btn-icon {
-    font-size: 22px;
-}
-
-.btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none !important;
-}
 
 /* Адаптивность */
 @media (max-width: 768px) {
@@ -370,25 +224,6 @@ titleInput.addEventListener('input', function() {
     }
 });
 
-// Счетчик символов для содержания
-const contentInput = document.getElementById('content');
-const contentCounter = document.getElementById('contentCounter');
-const contentError = document.getElementById('contentError');
-
-contentInput.addEventListener('input', function() {
-    const length = this.value.length;
-    const ending = getWordEnding(length, 'символ', 'символа', 'символов');
-    contentCounter.textContent = `${length} ${ending}`;
-    contentCounter.style.color = length > 500 ? '#FF6F00' : '#888';
-    
-    // Валидация в реальном времени
-    if (length > 0 && length < 10) {
-        showError(contentError, 'Содержание должно быть минимум 10 символов');
-    } else {
-        hideError(contentError);
-    }
-});
-
 // Функция для склонения слов
 function getWordEnding(number, one, two, five) {
     let n = Math.abs(number) % 100;
@@ -425,9 +260,13 @@ form.addEventListener('submit', function(e) {
         isValid = false;
     }
     
-    // Валидация содержания
-    if (contentInput.value.length < 10) {
-        showError(contentError, 'Содержание должно быть минимум 10 символов');
+    // Валидация содержания (получаем из TinyMCE)
+    const contentEditor = tinymce.get('content');
+    const content = contentEditor ? contentEditor.getContent() : '';
+    const contentText = content.replace(/<[^>]*>/g, '').trim();
+    
+    if (contentText.length < 10) {
+        showError(titleError, 'Содержание должно быть минимум 10 символов');
         isValid = false;
     }
     
@@ -452,13 +291,11 @@ deleteBtn.addEventListener('click', function() {
 
 // Очистка ошибок при фокусе
 titleInput.addEventListener('focus', () => hideError(titleError));
-contentInput.addEventListener('focus', () => hideError(contentError));
 
 // Проверка на изменения перед уходом со страницы
 let formChanged = false;
 
 titleInput.addEventListener('input', () => formChanged = true);
-contentInput.addEventListener('input', () => formChanged = true);
 
 window.addEventListener('beforeunload', function(e) {
     if (formChanged) {

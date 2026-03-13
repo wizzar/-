@@ -4,6 +4,8 @@ import uuid
 from flask import Flask, flash, render_template, request, redirect, url_for, session
 from services.user_service import UserService
 from services.post_service import PostService
+from services.like_service import LikeService
+from services.comment_service import CommentService
 from config import SECRET_KEY
 from database import init_db
 import re
@@ -14,8 +16,11 @@ app.secret_key = SECRET_KEY
 
 BASE_DIR = Path(__file__).parent
 UPLOAD_FOLDER = BASE_DIR / 'static' / 'uploads' / 'posts'
+AVATAR_FOLDER = BASE_DIR / 'static' / 'uploads' / 'avatars'
 UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)  # Автоматически создает всю структуру папок
+AVATAR_FOLDER.mkdir(parents=True, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = str(UPLOAD_FOLDER)
+app.config['AVATAR_FOLDER'] = str(AVATAR_FOLDER)
 app.config['MAX_CONTENT_LENGTH'] = 16*1024*1024   #не больше 16 МБ
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp', 'gif'}
 
@@ -126,9 +131,16 @@ def login():
 def profile():
     if 'user_login' not in session:
         return redirect(url_for('login'))
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('login'))
     print(session['user_login'])
     user = UserService.get_user_login(session['user_login'])
     print(user)
+    user = UserService.get_user_with_posts(user_id)
+    if not user:
+        flash('Пользователь не найден')
+        return redirect(url_for('index'))
     return render_template('profile.html', user = user)
 
 
@@ -177,7 +189,18 @@ def edit_profile():
     return render_template('edit_profile.html', user = user)
         
 
-
+@app.route('/user/<int:user_id>')
+def view_user_profile(user_id):
+    """Просмотр профиля другого пользователя"""
+    user = UserService.get_user_with_posts(user_id)
+    if not user:
+        flash('Пользователь не найден', 'error')
+        return redirect(url_for('index'))
+    
+    # Посты уже загружены в get_user_with_posts
+    user_posts = user.posts if user.posts else []
+    
+    return render_template('user_profile.html', user=user, posts=user_posts)
 
 
     
@@ -292,7 +315,65 @@ def delete_post(post_id):
     return redirect(url_for('index'))
 
 
+@app.route('/post/<int:post_id>/like', methods=['POST'])
+def toggle_like(post_id):
+    """Добавить или удалить лайк к посту"""
+    if 'user_login' not in session:
+        flash('Пожалуйста, войдите в систему', 'error')
+        return redirect(url_for('login'))
+    
+    user_id = session.get('user_id')
+    success, message = LikeService.toggle_like(post_id, user_id)
+    
+    if not success:
+        flash(message, 'error')
+    
+    return redirect(request.referrer or url_for('index'))
 
+
+@app.route('/post/<int:post_id>/comment', methods=['POST'])
+def add_comment(post_id):
+    """Добавить комментарий к посту"""
+    if 'user_login' not in session:
+        flash('Пожалуйста, войдите в систему', 'error')
+        return redirect(url_for('login'))
+    
+    content = request.form.get('content', '').strip()
+    user_id = session.get('user_id')
+    
+    comment, message = CommentService.create_comment(post_id, user_id, content)
+    
+    if not comment:
+        flash(message, 'error')
+    else:
+        flash('Комментарий добавлен', 'success')
+    
+    return redirect(request.referrer or url_for('view_post', post_id=post_id))
+
+
+@app.route('/comment/<int:comment_id>/delete', methods=['POST'])
+def delete_comment(comment_id):
+    """Удалить комментарий"""
+    if 'user_login' not in session:
+        flash('Пожалуйста, войдите в систему', 'error')
+        return redirect(url_for('login'))
+    
+    comment = CommentService.get_comment_by_id(comment_id)
+    if not comment:
+        flash('Комментарий не найден', 'error')
+        return redirect(url_for('index'))
+    
+    post_id = comment.post_id
+    user_id = session.get('user_id')
+    
+    success, message = CommentService.delete_comment(comment_id, user_id)
+    
+    if success:
+        flash('Комментарий удален', 'success')
+    else:
+        flash(message, 'error')
+    
+    return redirect(url_for('view_post', post_id=post_id))
 
 
 if __name__ == '__main__':

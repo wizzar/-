@@ -8,10 +8,21 @@
         <div class="post-detail-header">
             <h1 class="post-detail-title">{{ post.title }}</h1>
             <div class="post-detail-meta">
-                <span class="post-author">
-                    <span class="author-icon">👤</span>
-                    {{ post.author.name }}
-                </span>
+                {%if 'user_login' not in session or session.get('user_id') != post.author.id%}
+                    <a href="{{ url_for('view_user_profile', user_id=post.author.id) }}" class="post-author-link">
+                        <div class="author-badge">
+                            <span class="author-icon">👤</span>
+                            <span class="author-name">{{ post.author.name }}</span>
+                        </div>
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('profile') }}" class="post-author-link">
+                        <div class="author-badge">
+                            <span class="author-icon">👤</span>
+                            <span class="author-name">{{ post.author.name }}</span>
+                        </div>
+                    </a>
+                {% endif %}
                 <span class="post-date">
                     <span class="date-icon">📅</span>
                     {{ post.created_at.strftime('%d %B %Y, %H:%M') }}
@@ -26,11 +37,27 @@
         </div>
 
         {% if post.image_path %}
-            <img src="{{ url_for('static', filename=post.image_path) }}" alt="Post image">
+            <img src="{{ url_for('static', filename=post.image_path) }}" alt="Post image" class="post-image">
         {% endif %}
 
         <div class="post-detail-content">
             {{ post.content|nl2br|safe }}
+        </div>
+
+        <!-- Блок с лайками -->
+        <div class="post-likes-section">
+            <div class="likes-info">
+                <span class="likes-count">❤️ {{ post.likes|length }} лайков</span>
+            </div>
+            {% if 'user_login' in session %}
+            <a href="{{ url_for('toggle_like', post_id=post.id) }}" class="btn-like">
+                    {% if session.get('user_id') and post.likes|selectattr('user_id', 'equalto', session.get('user_id'))|list %}
+                        ❤️ Вам нравится
+                    {% else %}
+                        🤍 Нравится
+                    {% endif %}
+            </a>
+            {% endif %}
         </div>
 
         <div class="post-detail-actions">
@@ -46,9 +73,56 @@
             <a href="{{ url_for('index') }}" class="btn-back">← Вернуться к постам</a>
         </div>
     </article>
+
+    <!-- Секция комментариев -->
+    <section class="comments-section">
+        <h2 class="comments-title">Комментарии ({{ post.comments|length }})</h2>
+
+        {% if 'user_login' in session %}
+        <div class="add-comment-form">
+            <h3>Добавить комментарий</h3>
+            <form method="POST" action="{{ url_for('add_comment', post_id=post.id) }}">
+                <textarea name="content" placeholder="Ваш комментарий..." required minlength="1" maxlength="1000" rows="4"></textarea>
+                <button type="submit" class="btn-primary">Отправить комментарий</button>
+            </form>
+        </div>
+        {% else %}
+        <p class="login-prompt"><a href="{{ url_for('login') }}">Войдите</a>, чтобы оставить комментарий</p>
+        {% endif %}
+
+        <div class="comments-list">
+            {% if post.comments %}
+                {% for comment in post.comments|reverse %}
+                <div class="comment-item">
+                    <div class="comment-header">
+                        {%if 'user_login' not in session or session.get('user_id') != comment.author.id%}
+                            <a href="{{ url_for('view_user_profile', user_id=comment.author.id) }}" class="comment-author">
+                                {{ comment.author.name }}
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('profile') }}" class="comment-author">
+                                {{ comment.author.name }}
+                            </a>
+                        {% endif %}
+                        <span class="comment-date">{{ comment.created_at.strftime('%d %B %Y, %H:%M') }}</span>
+                    </div>
+                    <div class="comment-content">
+                        {{ comment.content }}
+                    </div>
+                    {% if 'user_login' in session and session.get('user_id') == comment.user_id %}
+                    <div class="comment-actions">
+                        <form method="POST" action="{{ url_for('delete_comment', comment_id=comment.id) }}" class="delete-comment-form" onsubmit="return confirm('Удалить комментарий?')">
+                            <button type="submit" class="btn-delete-comment">🗑️ Удалить</button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+            <p class="no-comments">Комментариев пока нет. Будьте первым!</p>
+            {% endif %}
+        </div>
+    </section>
 </div>
 
-<style>
-
-</style>
 {% endblock %}

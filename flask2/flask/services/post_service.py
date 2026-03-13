@@ -1,6 +1,7 @@
 from database import Session_safe
 from models.post import Post
 from models.user import User
+from models.comment import Comment
 from sqlalchemy.orm import joinedload
 
 
@@ -18,7 +19,7 @@ class PostService:
             if len(content) < 50:
                 return None, "Содержание должно быть не менее 50 символов"
             
-            new_post = Post(title=title, content=content, user_id=user_id, image_path = image_path)
+            new_post = Post(title=title, content=content.strip(), user_id=user_id, image_path = image_path)
             
             db.add(new_post)
             db.commit()
@@ -51,7 +52,7 @@ class PostService:
     def get_post_by_id(post_id):
         db = Session_safe()
         try:
-            post = db.query(Post).options(joinedload(Post.author)).filter(Post.id == post_id).first()
+            post = db.query(Post).options(joinedload(Post.author), joinedload(Post.likes), joinedload(Post.comments).joinedload(Comment.author)).filter(Post.id == post_id).first()
             return post
         except Exception as e:
             print(f"Ошибка при получении поста: {e}")
