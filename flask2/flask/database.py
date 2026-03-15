@@ -6,7 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from config import DATABASE_URI
 
-engine = create_engine(DATABASE_URI)
+engine = create_engine(DATABASE_URI,connect_args={"ssl": {"check_hostname": False}})
 
 SessionLocal = sessionmaker(autocommit = False, autoflush=False, bind = engine)
 

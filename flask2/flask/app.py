@@ -102,6 +102,7 @@ def register():
         user, message = UserService.create_user(login, password, gender, name)
         if user:
             session['user_login'] = user.login
+            session['user_id'] = user.id
             flash(message)
             return redirect(url_for('index'))
         else:
