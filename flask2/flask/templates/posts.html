@@ -58,7 +58,7 @@
             <h2>Пока нет постов</h2>
             <p>Будьте первым, кто опубликует пост!</p>
             {% if current_user %}
-            <a href="{{ url_for('create_post') }}" class="btn-secondary">✍️ Создать пост</a>
+            <a href="{{ url_for('create_post') }}" class="btn">✍️ Создать пост</a>
             {% endif %}
         </div>
         {% endif %}
