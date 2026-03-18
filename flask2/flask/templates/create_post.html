@@ -42,12 +42,12 @@
         
         <!-- 🔍 Предпросмотр -->
         <div class="form-group">
-            <button type="button" class="btn-secondary" id="preview-btn">👁️ Предпросмотр</button>
+            <button type="button" class="btn-secondary" id="btn">👁️ Предпросмотр</button>
         </div>
         
-        <div class="form-actions">
-            <button type="submit" class="btn-primary">🚀 Опубликовать пост</button>
-            <a href="{{ url_for('index') }}" class="btn-secondary">Отмена</a>
+        <div class="form-group-btn">
+            <button type="submit" class="btn">🚀 Опубликовать пост</button>
+            <a href="{{ url_for('index') }}" class="btn">Отмена</a>
         </div>
     </form>
 </div>
@@ -231,7 +231,7 @@ function removeImage() {
 }
 
 // Предпросмотр поста
-document.getElementById('preview-btn')?.addEventListener('click', function() {
+document.getElementById('btn')?.addEventListener('click', function() {
     const title = document.getElementById('title')?.value || 'Без заголовка';
     const content = tinymce.get('content')?.getContent() || '';
     
@@ -266,34 +266,5 @@ document.getElementById('post-form')?.addEventListener('submit', function() {
 });
 </script>
 
-<style>
 
-
-/* Адаптивность */
-@media (max-width: 768px) {
-    .create-post-container {
-        padding: 0 1rem;
-    }
-    
-    .post-form {
-        padding: 1.8rem;
-    }
-    
-    .form-actions {
-        flex-direction: column;
-    }
-    
-    .btn-primary,
-    .btn-secondary {
-        width: 100%;
-    }
-    
-    .modal-content {
-        margin: 1rem;
-        padding: 1.5rem;
-    }
-}
-
-
-</style>
 {% endblock %}

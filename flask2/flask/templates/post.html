@@ -50,13 +50,15 @@
                 <span class="likes-count">❤️ {{ post.likes|length }} лайков</span>
             </div>
             {% if 'user_login' in session %}
-            <a href="{{ url_for('toggle_like', post_id=post.id) }}" class="btn-like">
-                    {% if session.get('user_id') and post.likes|selectattr('user_id', 'equalto', session.get('user_id'))|list %}
-                        ❤️ Вам нравится
-                    {% else %}
-                        🤍 Нравится
-                    {% endif %}
-            </a>
+                <form action="{{ url_for('toggle_like', post_id=post.id) }}" method="POST" class="like-form">
+                    <button type="submit" class="btn">
+                        {% if session.get('user_id') and post.likes|selectattr('user_id', 'equalto', session.get('user_id'))|list %}
+                            ❤️ Вам нравится
+                        {% else %}
+                            🤍 Нравится
+                        {% endif %}
+                    </button>
+                </form>
             {% endif %}
         </div>
 
@@ -65,12 +67,12 @@
             <div class="post-actions-buttons">
                 <a href="{{ url_for('edit_post', post_id=post.id) }}" class="btn-secondary">✏️ Редактировать</a>
                 <form method="POST" action="{{ url_for('delete_post', post_id=post.id) }}" class="delete-form" onsubmit="return confirm('⚠️ Вы уверены, что хотите удалить этот пост?\nЭто действие нельзя отменить!')">
-                    <button type="submit" class="btn-danger">🗑️ Удалить</button>
+                    <button type="submit" class="btn-secondary">🗑️ Удалить</button>
                 </form>
             </div>
             {% endif %}
             
-            <a href="{{ url_for('index') }}" class="btn-back">← Вернуться к постам</a>
+            <a href="{{ url_for('index') }}" class="btn-secondary">← Вернуться к постам</a>
         </div>
     </article>
 
@@ -83,7 +85,7 @@
             <h3>Добавить комментарий</h3>
             <form method="POST" action="{{ url_for('add_comment', post_id=post.id) }}">
                 <textarea name="content" placeholder="Ваш комментарий..." required minlength="1" maxlength="1000" rows="4"></textarea>
-                <button type="submit" class="btn-primary">Отправить комментарий</button>
+                <button type="submit" class="btn-secondary">Отправить комментарий</button>
             </form>
         </div>
         {% else %}
@@ -112,7 +114,7 @@
                     {% if 'user_login' in session and session.get('user_id') == comment.user_id %}
                     <div class="comment-actions">
                         <form method="POST" action="{{ url_for('delete_comment', comment_id=comment.id) }}" class="delete-comment-form" onsubmit="return confirm('Удалить комментарий?')">
-                            <button type="submit" class="btn-delete-comment">🗑️ Удалить</button>
+                            <button type="submit" class="btn-secondary">🗑️ Удалить</button>
                         </form>
                     </div>
                     {% endif %}

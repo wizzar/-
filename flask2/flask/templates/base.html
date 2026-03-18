@@ -37,11 +37,11 @@
         
         <!-- Кнопка авторизации / Профиль -->
         {% if current_user %}
-            <a href="{{ url_for('profile') }}" class="profile-btn">
+            <a href="{{ url_for('profile') }}" class="btn">
                 <div class="profile-icon">{{ current_user.name[0] | upper }}</div>
             </a>
         {% else %}
-            <a href="{{ url_for('login') }}" class="auth-btn">Войти</a>
+            <a href="{{ url_for('login') }}" class="btn">Войти</a>
         {% endif %}
     </header>
 

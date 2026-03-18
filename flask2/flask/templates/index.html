@@ -25,7 +25,7 @@
             <h3>Пока нет ни одного поста</h3>
             <p>Будьте первым, кто поделится своими мыслями!</p>
             {% if 'user_login' in session %}
-            <a href="{{ url_for('create_post') }}" class="btn-primary">Создать пост</a>
+            <a href="{{ url_for('create_post') }}" class="btn-secondary">Создать пост</a>
             {% endif %}
         </div>
     {% endif %}

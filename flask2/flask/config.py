@@ -9,6 +9,7 @@ db_pass = os.environ.get("DATABASE_PASSWORD")
 db_name = os.environ.get("DATABASE_NAME")
 
 
-DATABASE_URI = f'mysql+pymysql://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}'
+#DATABASE_URI = f'mysql+pymysql://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}'
+DATABASE_URI = f'mysql+pymysql://root:root@localhost/test'
 
 SECRET_KEY = 'your_secret_key_here'
