@@ -1,9 +1,9 @@
+from sqlalchemy import or_
 from database import Session_safe
 from models.post import Post
 from models.user import User
 from models.comment import Comment
 from sqlalchemy.orm import joinedload
-
 
 class PostService:
     @staticmethod
