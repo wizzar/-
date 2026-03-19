@@ -120,4 +120,23 @@ class PostService:
             return db.query(Post).options(joinedload(Post.author)).order_by(Post.created_at.desc()).all()
         finally:
             db.close()
+    @staticmethod
+    def search_posts(query):
+        if not query:
+            return []
+        db = Session_safe()
+        search_pattern = f"%{query}%"
+
+        posts = db.query(Post).join(User, Post.user_id == User.id)\
+        .filter(
+            or_(
+                Post.title.ilike(search_pattern),
+                Post.content.ilike(search_pattern),
+                User.name.ilike(search_pattern)
+            )
+        )\
+        .order_by(Post.created_at.desc()).all()
+
+
+        return posts
     

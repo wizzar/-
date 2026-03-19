@@ -16,8 +16,7 @@
                 type="text" 
                 name="q" 
                 placeholder="Введите ключевые слова..." 
-                class="search-input"
-                value="{{ search_query }}"
+                id="searchInput"
             >
             <button type="submit" class="btn">Искать</button>
         </form>
@@ -50,21 +49,7 @@
                             {{ post.content|truncate(150)|nl2br|safe }}
                         </div>
                         
-                        <div class="post-card-footer">
-                            <div class="post-stats">
-                                <span class="stat-item">
-                                    <span class="stat-icon">👀</span>
-                                    <span class="stat-value">{{ post.views }}</span>
-                                </span>
-                                <span class="stat-item">
-                                    <span class="stat-icon">❤️</span>
-                                    <span class="stat-value">{{ post.likes }}</span>
-                                </span>
-                                <span class="stat-item">
-                                    <span class="stat-icon">💬</span>
-                                    <span class="stat-value">{{ post.comments_count }}</span>
-                                </span>
-                            </div>
+                        <div class="post-card-footer">  
                             <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn">
                                 Читать полностью →
                             </a>
